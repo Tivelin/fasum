@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:geolocator/geolocator.dart';
+import 'package:fasum/current_location.dart';
 
 class AddPostScreen extends StatefulWidget {
   @override
@@ -15,6 +18,25 @@ class _AddPostScreenState extends State<AddPostScreen> {
   File? _image;
   final picker = ImagePicker();
   final TextEditingController _descriptionController = TextEditingController();
+  Position? _currentPosition;
+  final CurrentLocation _currentLocation = CurrentLocation();
+
+  @override
+  void initState(){
+    super.initState();
+    _getLocation();
+  }
+
+  Future<void> _getLocation() async {
+    try {
+      Position position = await _currentLocation.getCurrentLocation();
+      setState(() {
+        _currentPosition=position;
+      });
+    }catch(e){
+      print(e);
+    }
+  }
 
   Future getImage() async {
     final pickedFile = await picker.pickImage(source: ImageSource.camera);
@@ -57,6 +79,8 @@ class _AddPostScreenState extends State<AddPostScreen> {
       'description': _descriptionController.text,
       'timestamp': Timestamp.now(),
       'username': username, // Hardcoded username, you can replace this with actual user data
+      'latitude' : _currentPosition?.latitude,
+      'longitude' : _currentPosition?.longitude,
     });
 
     Navigator.pop(context);
